@@ -28,6 +28,12 @@ async function sendToTelegram(data: SubmissionData) {
 ⏰ 접수 시간: ${new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
   `;
 
+  console.log("Sending message to Telegram:", {
+    chatId,
+    messageLength: message.trim().length,
+    messagePreview: message.trim().substring(0, 100) + "..."
+  });
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
@@ -71,8 +77,12 @@ async function sendToTelegram(data: SubmissionData) {
     if (!response.ok) {
       const error = await response.text();
       console.error("Telegram API error:", error);
+      console.error("Response status:", response.status);
+      console.error("Response headers:", Object.fromEntries(response.headers.entries()));
     } else {
+      const responseData = await response.json();
       console.log("Telegram message sent successfully");
+      console.log("Telegram API response:", responseData);
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
