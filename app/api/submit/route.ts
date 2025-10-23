@@ -75,7 +75,7 @@ async function sendToTelegram(data: SubmissionData) {
       console.log("Telegram message sent successfully");
     }
   } catch (error) {
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       console.error("Telegram API request timeout");
     } else {
       console.error("Failed to send Telegram message:", error);

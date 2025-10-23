@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Car, Phone, CheckCircle, Clock, Shield, TrendingUp } from "lucide-react";
 
 export default function Home() {
@@ -56,10 +57,13 @@ export default function Home() {
           <div className="text-center">
             {/* Logo */}
             <div className="mb-8 sm:mb-10">
-              <img 
+              <Image 
                 src="/logo.png" 
                 alt="카딜픽 로고" 
+                width={384}
+                height={200}
                 className="mx-auto w-72 sm:w-84 lg:w-96 h-auto drop-shadow-lg"
+                priority
               />
             </div>
             <p className="text-lg sm:text-xl lg:text-2xl mb-6 sm:mb-8 text-blue-100 max-w-3xl mx-auto px-2 break-keep leading-relaxed">
