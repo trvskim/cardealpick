@@ -35,48 +35,24 @@ async function sendToTelegram(data: SubmissionData) {
   });
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
-
-    // Try multiple Telegram API endpoints
-    const endpoints = [
+    console.log("Starting Telegram API call...");
+    
+    const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
-      `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message.trim())}`,
-      `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=Test%20message`
-    ];
-    
-    let response;
-    let lastError;
-    
-    for (const endpoint of endpoints) {
-      try {
-        console.log("Trying endpoint:", endpoint);
-        response = await fetch(endpoint, {
-          method: endpoint.includes('?') ? "GET" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: endpoint.includes('?') ? undefined : JSON.stringify({
-            chat_id: chatId,
-            text: message.trim(),
-            parse_mode: "HTML",
-          }),
-          signal: controller.signal,
-        });
-        console.log("Fetch response status:", response.status);
-        break; // 성공하면 루프 종료
-      } catch (error) {
-        console.error("Fetch error for endpoint:", endpoint, error);
-        lastError = error;
-        continue; // 다음 엔드포인트 시도
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message.trim(),
+          parse_mode: "HTML",
+        }),
       }
-    }
-    
-    if (!response) {
-      throw lastError;
-    }
+    );
 
-    clearTimeout(timeoutId);
+    console.log("Telegram API response status:", response.status);
 
     if (!response.ok) {
       const error = await response.text();
@@ -109,8 +85,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send to Telegram (non-blocking)
-    sendToTelegram(data).catch(console.error);
+    // Send to Telegram (blocking to ensure it completes)
+    try {
+      await sendToTelegram(data);
+    } catch (error) {
+      console.error("Telegram sending failed:", error);
+    }
 
     return NextResponse.json({
       success: true,
