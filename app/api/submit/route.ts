@@ -11,8 +11,10 @@ async function sendToTelegram(data: SubmissionData) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
+  console.log("Telegram Debug:", { botToken: botToken ? "SET" : "NOT SET", chatId });
+
   if (!botToken || !chatId) {
-    console.warn("Telegram credentials not configured");
+    console.warn("Telegram credentials not configured", { botToken: !!botToken, chatId: !!chatId });
     return;
   }
 
@@ -27,27 +29,57 @@ async function sendToTelegram(data: SubmissionData) {
   `;
 
   try {
-    const response = await fetch(
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+
+    // Try multiple Telegram API endpoints
+    const endpoints = [
       `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message.trim(),
-          parse_mode: "HTML",
-        }),
+      `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message.trim())}`
+    ];
+    
+    let response;
+    let lastError;
+    
+    for (const endpoint of endpoints) {
+      try {
+        response = await fetch(endpoint, {
+          method: endpoint.includes('?') ? "GET" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: endpoint.includes('?') ? undefined : JSON.stringify({
+            chat_id: chatId,
+            text: message.trim(),
+            parse_mode: "HTML",
+          }),
+          signal: controller.signal,
+        });
+        break; // 성공하면 루프 종료
+      } catch (error) {
+        lastError = error;
+        continue; // 다음 엔드포인트 시도
       }
-    );
+    }
+    
+    if (!response) {
+      throw lastError;
+    }
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const error = await response.text();
       console.error("Telegram API error:", error);
+    } else {
+      console.log("Telegram message sent successfully");
     }
   } catch (error) {
-    console.error("Failed to send Telegram message:", error);
+    if (error.name === 'AbortError') {
+      console.error("Telegram API request timeout");
+    } else {
+      console.error("Failed to send Telegram message:", error);
+    }
   }
 }
 
