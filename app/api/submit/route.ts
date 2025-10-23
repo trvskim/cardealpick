@@ -1,42 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 
 interface SubmissionData {
   carNumber: string;
   carModel: string;
   phoneNumber: string;
-}
-
-// Save submission to local JSON file
-async function saveSubmission(data: SubmissionData) {
-  const dataDir = path.join(process.cwd(), "data");
-  const filePath = path.join(dataDir, "submissions.json");
-
-  // Create data directory if it doesn't exist
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-
-  // Read existing submissions
-  let submissions: any[] = [];
-  if (fs.existsSync(filePath)) {
-    const fileContent = fs.readFileSync(filePath, "utf-8");
-    submissions = JSON.parse(fileContent);
-  }
-
-  // Add new submission
-  const newSubmission = {
-    ...data,
-    timestamp: new Date().toISOString(),
-    id: Date.now().toString(),
-  };
-  submissions.push(newSubmission);
-
-  // Write back to file
-  fs.writeFileSync(filePath, JSON.stringify(submissions, null, 2));
-  
-  return newSubmission;
 }
 
 // Send message to Telegram
@@ -96,16 +63,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save submission to local storage
-    const savedSubmission = await saveSubmission(data);
-
     // Send to Telegram (non-blocking)
     sendToTelegram(data).catch(console.error);
 
     return NextResponse.json({
       success: true,
       message: "신청이 완료되었습니다",
-      data: savedSubmission,
     });
   } catch (error) {
     console.error("Submission error:", error);
