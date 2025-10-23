@@ -41,7 +41,8 @@ async function sendToTelegram(data: SubmissionData) {
     // Try multiple Telegram API endpoints
     const endpoints = [
       `https://api.telegram.org/bot${botToken}/sendMessage`,
-      `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message.trim())}`
+      `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message.trim())}`,
+      `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=Test%20message`
     ];
     
     let response;
@@ -49,6 +50,7 @@ async function sendToTelegram(data: SubmissionData) {
     
     for (const endpoint of endpoints) {
       try {
+        console.log("Trying endpoint:", endpoint);
         response = await fetch(endpoint, {
           method: endpoint.includes('?') ? "GET" : "POST",
           headers: {
@@ -61,8 +63,10 @@ async function sendToTelegram(data: SubmissionData) {
           }),
           signal: controller.signal,
         });
+        console.log("Fetch response status:", response.status);
         break; // 성공하면 루프 종료
       } catch (error) {
+        console.error("Fetch error for endpoint:", endpoint, error);
         lastError = error;
         continue; // 다음 엔드포인트 시도
       }
