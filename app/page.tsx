@@ -99,7 +99,7 @@ export default function Home() {
               무료 차량 견적 신청
             </h2>
             <p className="text-base sm:text-lg text-gray-600 break-keep leading-relaxed px-2">
-              정보를 입력해주시면 전문 딜러가 빠르게 연락드립니다
+              정보를 입력해주시면 전문 딜러가 빠르게 안내드립니다
             </p>
           </div>
 
