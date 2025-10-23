@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
     // Send to Telegram (blocking to ensure it completes)
     let telegramSuccess = false;
     try {
-      telegramSuccess = await sendToTelegram(data);
+      const result = await sendToTelegram(data);
+      telegramSuccess = result === true;
     } catch (error) {
       console.error("Telegram sending failed:", error);
     }
