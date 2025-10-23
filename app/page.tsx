@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { track } from '@vercel/analytics';
 import { Car, Phone, CheckCircle, Clock, Shield, TrendingUp } from "lucide-react";
 
 export default function Home() {
@@ -12,6 +13,14 @@ export default function Home() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+
+  // 페이지 방문 추적
+  useEffect(() => {
+    track('page_view', {
+      page: 'landing_page',
+      timestamp: new Date().toISOString()
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +39,13 @@ export default function Home() {
       if (response.ok) {
         setSubmitStatus("success");
         setFormData({ carNumber: "", carModel: "", phoneNumber: "" });
+        
+        // Vercel Analytics 이벤트 추적
+        track('car_inquiry_submitted', {
+          car_number: formData.carNumber,
+          car_model: formData.carModel,
+          timestamp: new Date().toISOString()
+        });
       } else {
         setSubmitStatus("error");
       }
@@ -45,6 +61,12 @@ export default function Home() {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
+    });
+    
+    // 폼 필드 입력 추적
+    track('form_field_updated', {
+      field: e.target.name,
+      has_value: e.target.value.length > 0
     });
   };
 

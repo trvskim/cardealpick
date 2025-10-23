@@ -59,10 +59,12 @@ async function sendToTelegram(data: SubmissionData) {
       console.error("Telegram API error:", error);
       console.error("Response status:", response.status);
       console.error("Response headers:", Object.fromEntries(response.headers.entries()));
+      throw new Error(`Telegram API error: ${response.status}`);
     } else {
       const responseData = await response.json();
       console.log("Telegram message sent successfully");
       console.log("Telegram API response:", responseData);
+      return true;
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
@@ -70,6 +72,7 @@ async function sendToTelegram(data: SubmissionData) {
     } else {
       console.error("Failed to send Telegram message:", error);
     }
+    return false;
   }
 }
 
@@ -86,11 +89,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Send to Telegram (blocking to ensure it completes)
+    let telegramSuccess = false;
     try {
-      await sendToTelegram(data);
+      telegramSuccess = await sendToTelegram(data);
     } catch (error) {
       console.error("Telegram sending failed:", error);
     }
+
+    console.log("Submission completed:", {
+      telegram_sent: telegramSuccess,
+      car_number: data.carNumber,
+      car_model: data.carModel,
+      timestamp: new Date().toISOString()
+    });
 
     return NextResponse.json({
       success: true,
